@@ -1,0 +1,20 @@
+db.createCollection(
+          "PrintDocRequest", 
+		  {
+	capped: false,
+	validator: {
+		$jsonSchema: {
+			bsonType: "object",
+			required: ["docId", "machineId","custId", "mobileNo", "documentURL"],
+			
+		}
+	}
+}          
+);
+
+db.PrintDocRequest.createIndex( {"docId":  1 }, { unique: true });
+
+
+sh.shardCollection( "zeroxDB.PrintDocRequest", { machineId: "hashed" } );
+
+
