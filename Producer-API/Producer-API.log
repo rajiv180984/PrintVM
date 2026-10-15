@@ -1,1 +1,1 @@
-2026-09-29 21:58:24,773 INFO o.s.b.SpringApplication [main] No active profile set, falling back to default profiles: default
+2026-10-14 19:53:31,752 INFO o.s.b.SpringApplication [restartedMain] The following profiles are active: local

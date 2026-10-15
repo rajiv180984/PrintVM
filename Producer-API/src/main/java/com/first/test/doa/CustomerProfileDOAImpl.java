@@ -7,7 +7,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.hibernate.Session;
 /*
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -79,8 +78,6 @@ public class CustomerProfileDOAImpl implements CustomerProfileDOA{
 				mongoTemplate.save(walletModel);
 
 				logger.info(" wallet created Success fully===========");
-				// User persist in RDBMS for token and autherization
-				oauthSaveUserCredential(customer);
 
 				customer.setWid(walletModel.getWid());
 				customer.setBalance(0.0f);
@@ -142,56 +139,23 @@ public class CustomerProfileDOAImpl implements CustomerProfileDOA{
 	}
 
 
-	@Transactional
-	private void oauthSaveUserCredential(Customer customer) {
-		UserCredentialOauth userOauth = new UserCredentialOauth();
-        
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-		String hashedPassword = passwordPrefix.concat(passwordEncoder.encode(customer.getUserCredentials().getPassword()));
-		// enable on clcking on link
-		
-		userOauth.setEnabled(false);
-		userOauth.setUsername(customer.getUserCredentials().getUserName());
-		userOauth.setPassword(hashedPassword);
-		
-		// Below code must be achieved by Rest call
-		
-	/*	Session session = entityManager.unwrap(Session.class);
-        session.save(userOauth);
-    */    
-    /*    OauthAutherities oauthAutherities = new OauthAutherities();
-        oauthAutherities.setAuthority(AutherityRoles.ROLE_USER.name());
-        oauthAutherities.setUsername(customer.getUserCredentials().getUserName());
-        session.save(oauthAutherities);
-    */    
-        //INSERT INTO authorities (username, authority) VALUES ('user', 'ROLE_USER');
-        /*System.out.println(" Value :"+ customer.getUserCredentials().getUserName()+"************** "+AutherityRoles.ROLE_USER.name() );
-        entityManager.createNativeQuery("INSERT INTO authorities (username, authority) VALUES (?, ?)")
-        	    .setParameter(1, customer.getUserCredentials().getUserName())
-        	    .setParameter(2, AutherityRoles.ROLE_USER.name()).exe*/
-	}
-
-
 	private boolean persistUserCredentialForAutherization(Customer customer) {
 		// TODO Auto-generated method stub
 		try {
 		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 		String hashedPassword = passwordEncoder.encode(customer.getUserCredentials().getPassword());
-		// To-Do Remove Dangerous code 
-		logger.info("=========================="+hashedPassword);
 		UserCredentialOauth userCredentialOauth = new UserCredentialOauth();
 		userCredentialOauth.setEnabled(false);
 		userCredentialOauth.setUsername(customer.getUserCredentials().getUserName());
 		userCredentialOauth.setPassword("{bcrypt}"+hashedPassword);
-		Session session = entityManager.unwrap(Session.class);
-		session.save(userCredentialOauth);
+		entityManager.persist(userCredentialOauth);
 		
 		// to-do add logic for Partner registration, Contribution registration
 		
 		OauthAutherities oauthAutherities = new OauthAutherities();
 		oauthAutherities.setAuthority(AutherityRoles.ROLE_USER.name());
 		oauthAutherities.setUsername(customer.getUserCredentials().getUserName());
-		session.save(oauthAutherities);
+		entityManager.persist(oauthAutherities);
 		return true;
 		} catch (Exception e) {
 			// TODO: handle exception

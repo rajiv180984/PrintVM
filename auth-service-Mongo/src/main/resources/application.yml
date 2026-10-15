@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: auth-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://zeroxvm:Zerox180984@zeroxvm.n6ojx.mongodb.net/authdb?retryWrites=true&w=majority}
+      auto-index-creation: true
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+server:
+  port: ${SERVER_PORT:8443}
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+    key-alias: auth-service
+  error:
+    include-message: always
+
+app:
+  frontend-url: ${FRONTEND_URL:https://localhost:8443}
+  jwt:
+    # Base64 encoded HMAC-SHA key (min 256 bits). DEV ONLY - override with JWT_SECRET in every real environment.
+    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWNoYW5nZS1tZS1iZWZvcmUtZGVwbG95aW5nLTEyMzQ1Njc4OTA=}
+    issuer: auth-service
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+  security:
+    max-failed-attempts: 5
+    lock-duration: 15m
+    password-reset-ttl: 30m
+    email-verification-ttl: 24h
+    require-email-verification: false
+    # When true, reset / verification tokens are echoed in API responses so the flow can be
+    # tested without an SMTP server. Must be false in production.
+    expose-tokens-in-response: true
+    cors-allowed-origins:
+      - https://localhost:3000
+      - http://localhost:3000
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@auth-service.local}
+  seed:
+    enabled: true
+    admin-password: Admin@12345
+    user-password: User@12345
+  http-redirect:
+    # Optional plain HTTP connector that redirects everything to HTTPS
+    enabled: false
+    port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    persist-authorization: true
+
+logging:
+  level:
+    com.first.auth: INFO

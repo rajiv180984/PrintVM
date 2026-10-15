@@ -11,11 +11,10 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-
 import com.first.test.model.ContributorRoleRequest;
 import com.first.test.model.Feedback;
 import com.first.test.util.ServiceStatus;
-import com.mysql.cj.log.Log;
+
 
 @Service
 public class SupportServiceImpl implements SupportService{

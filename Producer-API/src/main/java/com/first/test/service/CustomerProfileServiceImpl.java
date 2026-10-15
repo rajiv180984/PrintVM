@@ -15,7 +15,6 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -387,10 +386,9 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 			Session session =entityManager.unwrap(Session.class);
 			
 			org.hibernate.Query qry = session.createQuery("update UserCredentialOauth set password =:passowrd, enabled=1 where username=:username");
-			qry.setString("username", emailId);
-			qry.setString("passowrd", hashedPassword);
-			System.out.println("======================= "+ qry.getQueryString());
-			int updateCount = qry.executeUpdate();
+			qry.setParameter("username", emailId);
+			qry.setParameter("passowrd", hashedPassword);
+				int updateCount = qry.executeUpdate();
 			if(updateCount>0) {
 				return ServiceStatus.SUCCESS.name();
 			}else {
@@ -402,39 +400,22 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 
 	private String validateResetProfileFromDB(Map<String, String> map) {
 		try {
-		Session session =entityManager.unwrap(Session.class);
 		String userName = map.get("username");
-		System.out.println("======== UserName ================ "+ userName);
-		org.hibernate.Criteria criteria = session.createCriteria(UserCredentialOauth.class);
-		criteria.add(Restrictions.eq("username", userName));
-		System.out.println("==============="+criteria.toString());
-		
-		List<UserCredentialOauth> list = criteria.list();
-		/*System.out.println("================================================="+ list.size()+"\n\n"+ list.get(0).getUsername());
-		org.hibernate.Query  query = session.createQuery("Select username, password from UserCredentialOauth where username=:username");
-		query.setString("username", userName); */
-		//@SuppressWarnings("unchecked")
-		//List<Object> results = query.list();
-	    if(list == null || list.isEmpty()) {
+		@SuppressWarnings("unchecked")
+		List<UserCredentialOauth> list = entityManager
+				.createQuery("select u from UserCredentialOauth u where u.username = :username")
+				.setParameter("username", userName)
+				.setMaxResults(1)
+				.getResultList();
+	    if(list.isEmpty()) {
 	    	logger.info(" No Record Exist ");
 	    	return ServiceStatus.FAILED.name();
 	    }
-	    
-	    UserCredentialOauth oauthObj = list.get(0);
-	    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();  
-	    
-	   String oldPassword = encoder.encode(map.get("oldpassword").toString());
-	    String existInDB = oauthObj.getPassword().replace("{bcrypt}", "");
-	    CharSequence old= map.get("oldpassword").toString();
-	    logger.info("*********3333************** "+ encoder.matches(old,  oauthObj.getPassword().toString()));
-	    logger.info("*********************** "+ encoder.matches(old, existInDB));
-	    logger.info(map.get("oldpassword").toString()+ "=========== Matched =========== "+existInDB+"\n\n" +encoder.matches(map.get("oldpassword"), existInDB));
-	    /*if(! encoder.matches(map.get("oldpassword"), existInDB)) {
-	    	logger.error("======= Old Password does not match =====");
-	    	return ServiceStatus.FAILED.name();
-	    }
-		*/
-		//updatePassword(userName, map.get("newpassword") );
+	    // FIXME security: the old-password check is still disabled (as before), so anyone who knows a
+	    // username can reset that password. To enable it:
+	    // if (!new BCryptPasswordEncoder().matches(map.get("oldpassword"), list.get(0).getPassword().replace("{bcrypt}", ""))) {
+	    //     return ServiceStatus.FAILED.name();
+	    // }
 		}catch (Exception e) {
 			logger.error("Failed to update passowrd", e);
 			return ServiceStatus.FAILED.name();
@@ -561,7 +542,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 		try {
 		Session session =entityManager.unwrap(Session.class);
 		org.hibernate.Query qry = session.createQuery("update UserCredentialOauth set enabled = true where  username=:username");
-		qry.setString("username", userName);
+		qry.setParameter("username", userName);
 		qry.executeUpdate();
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -647,12 +628,6 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 		return ServiceStatus.FAILED.name();
 	}
 
-	private void updatePassowrdInMysql(Customer customer) {
-
-    Session session = entityManager.unwrap(Session.class);
-		
-	}
-
 	private String updatePassword(String emailId, String newPassword) {
 		// TODO Auto-generated method stub
 		if(newPassword == null ) {
@@ -666,9 +641,8 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 		Session session =entityManager.unwrap(Session.class);
 		
 		org.hibernate.Query qry = session.createQuery("update UserCredentialOauth set password =:passowrd where username=:username");
-		qry.setString("username", emailId);
-		qry.setString("passowrd", hashedPassword);
-		System.out.println("======================= "+ qry.getQueryString());
+		qry.setParameter("username", emailId);
+		qry.setParameter("passowrd", hashedPassword);
 		int updateCount = qry.executeUpdate();
 		if(updateCount>0) {
 			return newPassword;

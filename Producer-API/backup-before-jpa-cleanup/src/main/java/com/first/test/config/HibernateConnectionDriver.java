@@ -31,10 +31,6 @@ public class HibernateConnectionDriver {
 	@Autowired
 	DatabaseConfig databaseConfig;
 
-	@Autowired
-	@Qualifier(value="entityManagerFactory")
-	private EntityManagerFactory entityManagerFactory;
-
 	@Bean
 	public DataSource dataSource() {
 
@@ -68,38 +64,30 @@ public class HibernateConnectionDriver {
 	}
 
 	@Bean
-	public SessionFactory getSessionFactory() {
-		if (entityManagerFactory.unwrap(SessionFactory.class) == null) {
-			throw new NullPointerException("factory is not a hibernate factory");
+	public SessionFactory getSessionFactory(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
+		SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
+		if (sessionFactory == null) {
+			throw new IllegalStateException("factory is not a hibernate factory");
 		}
-		return entityManagerFactory.unwrap(SessionFactory.class);
+		return sessionFactory;
 	}
 
+	// Return the FactoryBean and let Spring initialise it, so a Hibernate/DB startup
+	// failure surfaces as the real cause instead of a null EntityManagerFactory bean.
 	@Bean(name = "entityManagerFactory")
-	public EntityManagerFactory entityManagerFactory() {
-		LocalContainerEntityManagerFactoryBean emf = null;
-		try {
-			emf = new LocalContainerEntityManagerFactoryBean();
-			DataSource dataSource = dataSource();
-
-			if (dataSource == null) {
-				logger.error(" Failed to create Datasource ");
-				throw new DataSourceLookupFailureException("Failed to create Datasource");
-			}
-			JpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
-			emf.setJpaProperties(getHibernateProperties());
-			emf.setBeanName("hibernateProperties");
-			emf.setDataSource(dataSource);
-			emf.setJpaVendorAdapter(jpaVendorAdapter);
-			emf.setPackagesToScan("com.first.test");
-			emf.setPersistenceUnitName("default");
-
-			emf.afterPropertiesSet();
-
-		} catch (Exception e) {
-			logger.error("!!!! Enity Manager instantiation failed ", e);
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+		if (dataSource == null) {
+			logger.error(" Failed to create Datasource ");
+			throw new DataSourceLookupFailureException("Failed to create Datasource");
 		}
-		return emf.getObject();
+		LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+		JpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
+		emf.setJpaProperties(getHibernateProperties());
+		emf.setDataSource(dataSource);
+		emf.setJpaVendorAdapter(jpaVendorAdapter);
+		emf.setPackagesToScan("com.first.test");
+		emf.setPersistenceUnitName("default");
+		return emf;
 	}
 
 	@Bean

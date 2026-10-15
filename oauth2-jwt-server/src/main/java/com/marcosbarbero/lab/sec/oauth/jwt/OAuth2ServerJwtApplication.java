@@ -28,6 +28,10 @@ public class OAuth2ServerJwtApplication {
 	}
 
 	public static void main(String... args) {
+		// JAXB's bytecode-injection optimizer can't define classes on Java 9+ and logs a
+		// SEVERE PrivilegedActionException from Injector.<clinit>; use plain reflection instead.
+		// Must be set before any JAXB class loads.
+		System.setProperty("com.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize", "true");
 		SpringApplication.run(OAuth2ServerJwtApplication.class, args);
 	}
 

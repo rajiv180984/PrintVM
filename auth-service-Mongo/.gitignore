@@ -1,0 +1,9 @@
+target/
+*.log
+.idea/
+*.iml
+.vscode/
+
+# Generated locally by scripts/generate-keystore.* - never commit private keys
+src/main/resources/keystore.p12
+scripts/auth-service.crt
